@@ -21,6 +21,10 @@
 				"env": {
 					"DJANGO_SETTINGS_MODULE": "project.dev_settings"
 				},
+				"pythonArgs": [
+					"-X",
+					"pycache_prefix=__pycache__",
+				],
 			},
 			{
 				"name": "Django: migrate",
@@ -30,6 +34,13 @@
 				"console": "integratedTerminal",
 				"args": ["migrate"],
 				"cwd": "${workspaceFolder}/backend",
+				"env": {
+					"DJANGO_SETTINGS_MODULE": "project.dev_settings"
+				},
+				"pythonArgs": [
+					"-X",
+					"pycache_prefix=__pycache__",
+				],
 			},
 			{
 				"name": "Django: makemigrations",
@@ -39,6 +50,13 @@
 				"console": "integratedTerminal",
 				"args": ["makemigrations"],
 				"cwd": "${workspaceFolder}/backend",
+				"env": {
+					"DJANGO_SETTINGS_MODULE": "project.dev_settings"
+				},
+				"pythonArgs": [
+					"-X",
+					"pycache_prefix=__pycache__",
+				],
 			},
 		],
 	},
