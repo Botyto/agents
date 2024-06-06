@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"python.defaultInterpreterPath": "env/Scripts/python.exe",
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Django: runserver",
+				"type": "debugpy",
+				"request": "launch",
+				"program": "backend/manage.py",
+				"console": "integratedTerminal",
+				"args": ["runserver"],
+			}
+		],
+	},
+}
