@@ -14,10 +14,32 @@
 				"name": "Django: runserver",
 				"type": "debugpy",
 				"request": "launch",
-				"program": "backend/manage.py",
+				"program": "manage.py",
 				"console": "integratedTerminal",
 				"args": ["runserver"],
-			}
+				"cwd": "${workspaceFolder}/backend",
+				"env": {
+					"DJANGO_SETTINGS_MODULE": "project.dev_settings"
+				},
+			},
+			{
+				"name": "Django: migrate",
+				"type": "debugpy",
+				"request": "launch",
+				"program": "manage.py",
+				"console": "integratedTerminal",
+				"args": ["migrate"],
+				"cwd": "${workspaceFolder}/backend",
+			},
+			{
+				"name": "Django: makemigrations",
+				"type": "debugpy",
+				"request": "launch",
+				"program": "manage.py",
+				"console": "integratedTerminal",
+				"args": ["makemigrations"],
+				"cwd": "${workspaceFolder}/backend",
+			},
 		],
 	},
 }
