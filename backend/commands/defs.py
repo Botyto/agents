@@ -6,12 +6,13 @@ from django.db import models
 
 from .models import Command
 
+
 class AbstractCommand(ABC):
     name: ClassVar[str]
     target_model: ClassVar[Type[models.Model]]
     target_pk: UUID
     payload: dict
-    
+
     @property
     def target_object(self):
         return self.target_model.objects.get(pk=self.target_pk)
@@ -20,7 +21,7 @@ class AbstractCommand(ABC):
         self.target_pk = target_pk
         self.payload = payload
 
-    def save(self, tag: str, previous_command: Command|None = None):
+    def save(self, tag: str, previous_command: Command | None = None):
         return Command.objects.create(
             tag=tag,
             command=self.name,
@@ -32,9 +33,7 @@ class AbstractCommand(ABC):
         )
 
     @abstractmethod
-    def execute(self):
-        ...
+    def execute(self): ...
 
     @abstractmethod
-    def revert(self):
-        ...
+    def revert(self): ...

@@ -16,7 +16,7 @@ class Command(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=255, choices=CommandStatus.choices, default=CommandStatus.PENDING)
     tag = models.CharField(max_length=255)
-    previous_command = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
+    previous_command = models.ForeignKey("self", on_delete=models.CASCADE, null=True, blank=True)
     command = models.CharField(max_length=255)
     target_app = models.CharField(max_length=255)
     target_model = models.CharField(max_length=255)
