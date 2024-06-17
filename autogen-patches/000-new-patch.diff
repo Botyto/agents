@@ -1,0 +1,22 @@
+diff --git a/autogen/agentchat/conversable_agent.py b/autogen/agentchat/conversable_agent.py
+index b434fc648..59c97150f 100644
+--- a/autogen/agentchat/conversable_agent.py
++++ b/autogen/agentchat/conversable_agent.py
+@@ -2241,6 +2241,8 @@ def execute_function(self, func_call, verbose: bool = False) -> Tuple[bool, Dict
+                     colored(f"\n>>>>>>>> EXECUTING FUNCTION {func_name}...", "magenta"),
+                     flush=True,
+                 )
++                # Strip unknown arguments
++                arguments = {k: v for k, v in arguments.items() if k in inspect.signature(func).parameters}
+                 try:
+                     content = func(**arguments)
+                     is_exec_success = True
+@@ -2298,6 +2300,8 @@ async def a_execute_function(self, func_call):
+                     colored(f"\n>>>>>>>> EXECUTING ASYNC FUNCTION {func_name}...", "magenta"),
+                     flush=True,
+                 )
++                # Strip unknown arguments
++                arguments = {k: v for k, v in arguments.items() if k in inspect.signature(func).parameters}
+                 try:
+                     if inspect.iscoroutinefunction(func):
+                         content = await func(**arguments)
