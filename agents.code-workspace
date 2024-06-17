@@ -6,6 +6,7 @@
 	],
 	"settings": {
 		"python.defaultInterpreterPath": "env/Scripts/python.exe",
+		"python.analysis.extraPaths": [".autogen-repo"],
 	},
 	"launch": {
 		"version": "0.2.0",
