@@ -19,13 +19,19 @@ def ensure_repo():
 
 
 import pip
-import importlib.util
-def install_editable():
+def install_editable(strict: bool):
     ensure_repo()
-    if importlib.util.find_spec("autogen") is not None:
-        return
+    # is_installed = importlib.util.find_spec("autogen") is not None
     print("Installing autogen in editable mode")
-    pip.main(["install", "-e", REPO_PATH])
+    args = ["install", "-e", REPO_PATH]
+    if strict:
+        args.extend(["--config-settings", "editable_mode=strict"])
+    pip.main(args)
+
+
+def uninstall():
+    print("Uninstalling autogen")
+    pip.main(["uninstall", "pyautogen", "-y"])
 
 
 def clean_repo():
@@ -90,29 +96,40 @@ def setup():
     ensure_repo()
     clean_repo()
     apply_patches()
-    install_editable()
+    install_editable(True)
 
 
 def create_patch():
     print("Creating new patch")
     ensure_repo()
     clean_repo()
+    uninstall()
+    install_editable(False)
     apply_patches()
     commit()
     
+    print("")
+    print("-----------------------------------------------")
     input("Do your changes and press enter to create patch")
     path = next_patch_path()
     create_patch_from_changes(path)
 
+    uninstall()
     clean_repo()
     apply_patches()
+    install_editable(True)
 
 
 if __name__ == "__main__":
-    choice = input("Setup or create patch? (s/c): ")
+    import sys
+    if len(sys.argv) > 1:
+        choice = sys.argv[1]
+    else:
+        choice = input("Choose command (setup or create/patch): ")
+    choice = choice.lstrip()[0].lower()
     if choice == "s":
         setup()
-    elif choice == "c":
+    elif choice == "c" or choice == "p":
         create_patch()
     else:
         print("Invalid choice")
