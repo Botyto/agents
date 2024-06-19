@@ -26,6 +26,7 @@
 					"-X",
 					"pycache_prefix=__pycache__",
 				],
+				"justMyCode": false,
 			},
 			{
 				"name": "Django: migrate",
@@ -42,6 +43,7 @@
 					"-X",
 					"pycache_prefix=__pycache__",
 				],
+				"justMyCode": false,
 			},
 			{
 				"name": "Django: makemigrations",
@@ -58,6 +60,19 @@
 					"-X",
 					"pycache_prefix=__pycache__",
 				],
+				"justMyCode": false,
+			},
+			{
+				"name": "Python: Current file",
+				"type": "debugpy",
+				"request": "launch",
+				"program": "${file}",
+				"console": "integratedTerminal",
+				"pythonArgs": [
+					"-X",
+					"pycache_prefix=__pycache__",
+				],
+				"justMyCode": false,
 			},
 		],
 	},
