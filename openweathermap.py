@@ -21,12 +21,11 @@ class ExcludeInfo(Enum):
 
 
 SUPPORTED_LANGUAGES = {
-    "sq","af","ar","az","eu","be","bg","ca","zh_cn",
-    "zh_tw","hr","cz","da","nl","en","fi","fr","gl",
-    "de","el","he","hi","hu","is","id","it","ja","kr",
-    "ku","la","lt","mk","no","fa","pl","pt","pt_br",
-    "ro","ru","sr","sk","sl","sp","sv","th","tr","ua",
-    "vi","zu",
+    "sq", "af", "ar", "az", "eu", "be", "bg", "ca", "zh_cn",
+    "zh_tw", "hr", "cz", "da", "nl", "en", "fi", "fr", "gl", "de",
+    "el", "he", "hi", "hu", "is", "id", "it", "ja", "kr", "ku",
+    "la", "lt", "mk", "no", "fa", "pl", "pt", "pt_br", "ro", "ru",
+    "sr", "sk", "sl", "sp", "sv", "th", "tr", "ua", "vi", "zu",
 }
 
 
