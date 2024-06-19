@@ -47,13 +47,13 @@ class OpenWeatherMapApi:
         if query:
             query += "&"
         query = f"{query}appid={self.api_key}&units={self.units.value}&lang={self.language}"
-        url = urlunparse((schema, netloc, path, params, f"{query}&appid={self.api_key}", fragment))
+        url = urlunparse((schema, netloc, path, params, query, fragment))
         response = self.session.get(url)
         response.raise_for_status()
         return response.json()
 
     def one_call(self, lon: float, lat: float, exclude: List[ExcludeInfo] = []):
-        exclude_str = ",".join(exclude)
+        exclude_str = ",".join(e.value for e in exclude)
         data = self._get(f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude={exclude_str}")
         return OneCallResponse(data)
 
