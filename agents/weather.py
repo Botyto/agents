@@ -49,7 +49,7 @@ class OpenWeatherMapProvider(WeatherProvider):
             "rain": response.current.rain,
             "snow": response.current.snow,
             "weather": response.current.weather.main,
-            "alerts": [a.description for a in response.alerts],
+            # "alerts": [a.description for a in response.alerts],
         }
 
     def forecast_hourly(self, location: str):
@@ -67,7 +67,7 @@ class OpenWeatherMapProvider(WeatherProvider):
                 }
                 for hour in response.hourly
             ],
-            "alerts": [a.description for a in response.alerts],
+            # "alerts": [a.description for a in response.alerts],
         }
 
     def forecast_daily(self, location: str):
@@ -85,7 +85,7 @@ class OpenWeatherMapProvider(WeatherProvider):
                 }
                 for day in response.daily
             ],
-            "alerts": [a.description for a in response.alerts],
+            # "alerts": [a.description for a in response.alerts],
         }
 
 
@@ -105,7 +105,7 @@ class WeatherAgent(ApiAgent):
         self,
         name: str,
         weather_provider: WeatherProvider,
-        system_message: Optional[Union[str, List]] = DEFAULT_PROMPT,
+        system_message: Optional[Union[str, List]] = None,
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
         human_input_mode: Literal["ALWAYS", "NEVER", "TERMINATE"] = "TERMINATE",
@@ -116,21 +116,21 @@ class WeatherAgent(ApiAgent):
         description: Optional[str] = None,
         chat_messages: Optional[Dict[Agent, List[Dict]]] = None,
     ):
-        def current(location: Annotated[str, "Where to query the weather"]) -> dict:
+        def get_current_weather(location: Annotated[str, "Where to query the weather"]) -> dict:
             """Get the current weather for a location."""
             return weather_provider.current(location)
         
-        def forecast_hourly(location: Annotated[str, "Where to query the weather"]) -> dict:
+        def get_hourly_forecast(location: Annotated[str, "Where to query the weather"]) -> dict:
             """Get the hourly forecast for a location."""
             return weather_provider.forecast_hourly(location)
         
-        def forecast_daily(location: Annotated[str, "Where to query the weather"]) -> dict:
+        def get_daily_forecast(location: Annotated[str, "Where to query the weather"]) -> dict:
             """Get the daily forecast for a location."""
             return weather_provider.forecast_daily(location)
 
         super().__init__(
             name=name,
-            tools=[current, forecast_hourly, forecast_daily],
+            tools=[get_current_weather, get_hourly_forecast, get_daily_forecast],
             system_message=system_message,
             is_termination_msg=is_termination_msg,
             max_consecutive_auto_reply=max_consecutive_auto_reply,

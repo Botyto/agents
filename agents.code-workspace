@@ -24,7 +24,7 @@
 				},
 				"pythonArgs": [
 					"-X",
-					"pycache_prefix=__pycache__",
+					"pycache_prefix=venv/__pycache__",
 				],
 				"justMyCode": false,
 			},
@@ -41,7 +41,7 @@
 				},
 				"pythonArgs": [
 					"-X",
-					"pycache_prefix=__pycache__",
+					"pycache_prefix=venv/__pycache__",
 				],
 				"justMyCode": false,
 			},
@@ -58,7 +58,7 @@
 				},
 				"pythonArgs": [
 					"-X",
-					"pycache_prefix=__pycache__",
+					"pycache_prefix=venv/__pycache__",
 				],
 				"justMyCode": false,
 			},
@@ -70,7 +70,7 @@
 				"console": "integratedTerminal",
 				"pythonArgs": [
 					"-X",
-					"pycache_prefix=__pycache__",
+					"pycache_prefix=venv/__pycache__",
 				],
 				"justMyCode": false,
 			},

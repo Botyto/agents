@@ -1,17 +1,18 @@
 from autogen import Agent, AssistantAgent, ConversableAgent, UserProxyAgent
 import copy
-from typing import Optional, Union, Literal, Callable, Tuple, Dict, List
+from typing import Callable, ClassVar, Dict, List, Literal, Optional, Tuple, Union
 from autogen import OpenAIWrapper
 
 
 class ApiAgent(ConversableAgent):
-    tools: List[Callable]
-
+    DEFAULT_PROMPT: ClassVar[str] = "You are a helpful AI Assistant."
+    DEFAULT_DESCRIPTION: ClassVar[str] = "A helpful AI Assistant."
+    
     def __init__(
         self,
         name: str,
         tools: List[Callable],
-        system_message: Optional[Union[str, List]] = "You are a helpful AI Assistant.",
+        system_message: Optional[Union[str, List]] = None,
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
         human_input_mode: Literal["ALWAYS", "NEVER", "TERMINATE"] = "TERMINATE",
@@ -22,6 +23,8 @@ class ApiAgent(ConversableAgent):
         description: Optional[str] = None,
         chat_messages: Optional[Dict[Agent, List[Dict]]] = None,
     ):
+        system_message = system_message or self.DEFAULT_PROMPT
+        description = description or self.DEFAULT_DESCRIPTION
         super().__init__(
             name=name,
             system_message=system_message,
@@ -36,7 +39,6 @@ class ApiAgent(ConversableAgent):
             chat_messages=chat_messages,
         )
 
-        self.tools = tools
         inner_llm_config = copy.deepcopy(llm_config)
 
         # Does the decision making
@@ -57,15 +59,15 @@ class ApiAgent(ConversableAgent):
         )
 
         if inner_llm_config not in [None, False]:
-            self._register_functions()
+            self._register_functions(tools)
 
         self.register_reply([Agent, None], self.__class__.generate_api_reply, remove_other_reply_funcs=True)
         self.register_reply([Agent, None], ConversableAgent.generate_code_execution_reply)
         self.register_reply([Agent, None], ConversableAgent.generate_function_call_reply)
         self.register_reply([Agent, None], ConversableAgent.check_termination_and_human_reply)
 
-    def _register_functions(self):
-        for tool in self.tools:
+    def _register_functions(self, tools: List[Callable]):
+        for tool in tools:
             assert tool.__doc__, f"Tool {tool.__name__} must have a docstring."
             self._assistant.register_for_llm(description=tool.__doc__)(tool)
             self._user_proxy.register_for_execution()(tool)

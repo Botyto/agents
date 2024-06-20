@@ -53,7 +53,6 @@ group_chat = GroupChat(
 group_chat_manager = GroupChatManager(
     groupchat=group_chat,
     llm_config=llama3,
-    
 )
 
 
