@@ -484,8 +484,8 @@ class OneCallResponse:
         clouds: float
         uvi: float
         pop: float
-        rain: float
-        snow: float
+        rain: float|None
+        snow: float|None
         weather: WeatherDetails
 
         def __init__(self, data: dict):
@@ -507,8 +507,8 @@ class OneCallResponse:
             self.clouds = data["clouds"]
             self.uvi = data["uvi"]
             self.pop = data["pop"]
-            self.rain = data["rain"]
-            self.snow = data["snow"]
+            self.rain = data["rain"] if "rain" in data else None
+            self.snow = data["snow"] if "snow" in data else None
             self.weather = WeatherDetails(data["weather"])
 
 
