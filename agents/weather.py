@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated, Callable, Dict, List, Literal, Optional, Tuple, Union
 
 from .api import ApiAgent
-from openweathermap import OpenWeatherMapApi, ExcludeInfo
+from api.openweathermap import ExcludeInfo, OneCallResponse, OpenWeatherMapApi, Units
 
 
 class WeatherProvider(ABC):
@@ -24,9 +24,11 @@ class WeatherProvider(ABC):
 class OpenWeatherMapProvider(WeatherProvider):
     api: OpenWeatherMapApi
     _latlon_cache: Dict[str, Tuple[float, float]]
+    _alerts: bool
 
-    def __init__(self, api_key: str):
-        self.api = OpenWeatherMapApi(api_key)
+    def __init__(self, api_key: str, alerts: bool = False):
+        self.api = OpenWeatherMapApi(api_key, units=Units.METRIC)
+        self._alerts = alerts
         self._latlon_cache = {}
 
     def _latlon(self, location: str):
@@ -40,53 +42,55 @@ class OpenWeatherMapProvider(WeatherProvider):
             self._latlon_cache[lower] = result
         return result
 
+    def _process_alerts(self, alerts: List[OneCallResponse.Alert]|None):
+        if not alerts:
+            return []
+        return [a.description for a in alerts]
+    
+    def _format_response(
+            self,
+            entry: OneCallResponse.Current|OneCallResponse.Hourly|OneCallResponse.Daily,
+            alerts: List[OneCallResponse.Alert]|None,
+    ):
+        result = {
+            "temp_c": entry.temp,
+            "wind_meter_per_sec": entry.wind_speed,
+            "weather": entry.weather.main,
+        }
+        if isinstance(entry.rain, float):
+            if entry.rain > 0:
+                result["rain_mm_per_h"] = entry.rain
+        elif entry.rain:
+            result["rain_mm_per_h"] = entry.rain.one_h
+        if isinstance(entry.snow, float):
+            if entry.snow > 0:
+                result["snow_mm_per_h"] = entry.snow
+        elif entry.snow:
+            result["snow_mm_per_h"] = entry.snow.one_h
+        if self._alerts and alerts:
+            result["alerts"] = self._process_alerts(alerts)
+        return result
+
     def current(self, location: str):
         lat, lon = self._latlon(location)
         response = self.api.one_call(lat, lon, exclude=[ExcludeInfo.MINUTELY, ExcludeInfo.HOURLY, ExcludeInfo.DAILY])
-        return {
-            "temp": response.current.temp,
-            "wind_speed": response.current.wind_speed,
-            "rain": response.current.rain,
-            "snow": response.current.snow,
-            "weather": response.current.weather.main,
-            # "alerts": [a.description for a in response.alerts],
-        }
+        return self._format_response(response.current, response.alerts)
 
     def forecast_hourly(self, location: str):
         lat, lon = self._latlon(location)
         response = self.api.one_call(lat, lon, exclude=[ExcludeInfo.CURRENT, ExcludeInfo.MINUTELY, ExcludeInfo.DAILY])
-        return {
-            "hourly": [
-                {
-                    "hour": f"{hour.dt.hour:02}:00",
-                    "temp": hour.temp,
-                    "wind_speed": hour.wind_speed,
-                    "rain": hour.rain,
-                    "snow": hour.snow,
-                    "weather": hour.weather.main,
-                }
-                for hour in response.hourly
-            ],
-            # "alerts": [a.description for a in response.alerts],
-        }
+        result = {"hourly": [self._format_response(hour, None) for hour in response.hourly]}
+        if self._alerts and response.alerts:
+            result["alerts"] = self._process_alerts(response.alerts)
+        return result
 
     def forecast_daily(self, location: str):
         lat, lon = self._latlon(location)
         response = self.api.one_call(lat, lon, exclude=[ExcludeInfo.CURRENT, ExcludeInfo.MINUTELY, ExcludeInfo.HOURLY])
-        return {
-            "daily": [
-                {
-                    "date": day.dt.date().isoformat(),
-                    "temp": day.temp,
-                    "wind_speed": day.wind_speed,
-                    "rain": day.rain,
-                    "snow": day.snow,
-                    "weather": day.weather.main,
-                }
-                for day in response.daily
-            ],
-            # "alerts": [a.description for a in response.alerts],
-        }
+        result = {"daily": [self._format_response(day, None) for day in response.daily]}
+        if self._alerts and response.alerts:
+            result["alerts"] = self._process_alerts(response.alerts)
+        return result
 
 
 class WeatherAgent(ApiAgent):

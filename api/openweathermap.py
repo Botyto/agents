@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import datetime
 from enum import Enum
 import requests
-from typing import Dict, List
+from typing import Dict, List, Optional
 from urllib.parse import urlparse, urlunparse
 
 
@@ -54,15 +54,15 @@ class OpenWeatherMapApi:
 
     def one_call(self, lon: float, lat: float, exclude: List[ExcludeInfo] = []):
         exclude_str = ",".join(e.value for e in exclude)
-        data = self._get(f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude={exclude_str}")
+        data = self._get(f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude={exclude_str}")
         return OneCallResponse(data)
 
     def timemachine(self, lon: float, lat: float, dt: datetime.datetime):
-        data = self._get(f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&dt={int(dt.timestamp())}")
+        data = self._get(f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&dt={int(dt.timestamp())}")
         return TimemachineResponse(data)
 
     def day_summary(self, lon: float, lat: float, date: datetime.date):
-        data = self._get(f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&dt={date.isoformat()}")
+        data = self._get(f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&dt={date.isoformat()}")
         return DaySummaryResponse(data)
     
     def overview(self, lon: float, lat: float):
@@ -372,8 +372,8 @@ class OneCallResponse:
         wind_speed: float
         wind_gust: float|None
         wind_deg: float
-        rain: "OneCallResponse.Rain"
-        snow: "OneCallResponse.Snow"
+        rain: Optional["OneCallResponse.Rain"]
+        snow: Optional["OneCallResponse.Snow"]
         weather: WeatherDetails
 
         def __init__(self, data: dict):
@@ -391,9 +391,9 @@ class OneCallResponse:
             self.wind_speed = data["wind_speed"]
             self.wind_gust = data.get("wind_gust")
             self.wind_deg = data["wind_deg"]
-            self.rain = OneCallResponse.Rain(data["rain"])
-            self.snow = OneCallResponse.Snow(data["snow"])
-            self.weather = WeatherDetails(data["weather"])
+            self.rain = OneCallResponse.Rain(data["rain"]) if "rain" in data else None
+            self.snow = OneCallResponse.Snow(data["snow"]) if "snow" in data else None
+            self.weather = WeatherDetails(data["weather"][0])
 
 
     class Minutely:
@@ -419,8 +419,8 @@ class OneCallResponse:
         wind_gust: float|None
         wind_deg: float
         pop: float
-        rain: "OneCallResponse.Rain"
-        snow: "OneCallResponse.Snow"
+        rain: Optional["OneCallResponse.Rain"]
+        snow: Optional["OneCallResponse.Snow"]
         weather: WeatherDetails
 
         def __init__(self, data: dict):
@@ -437,9 +437,9 @@ class OneCallResponse:
             self.wind_gust = data.get("wind_gust")
             self.wind_deg = data["wind_deg"]
             self.pop = data["pop"]
-            self.rain = OneCallResponse.Rain(data["rain"])
-            self.snow = OneCallResponse.Snow(data["snow"])
-            self.weather = WeatherDetails(data["weather"])
+            self.rain = OneCallResponse.Rain(data["rain"]) if "rain" in data else None
+            self.snow = OneCallResponse.Snow(data["snow"]) if "snow" in data else None
+            self.weather = WeatherDetails(data["weather"][0])
 
 
     class DailyFeelsLike:
