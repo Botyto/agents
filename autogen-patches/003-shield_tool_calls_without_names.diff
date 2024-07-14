@@ -1,0 +1,22 @@
+diff --git a/autogen/agentchat/conversable_agent.py b/autogen/agentchat/conversable_agent.py
+index 59c97150f..51557f03f 100644
+--- a/autogen/agentchat/conversable_agent.py
++++ b/autogen/agentchat/conversable_agent.py
+@@ -1369,11 +1369,13 @@ def _generate_oai_reply_from_client(self, llm_client, messages, cache) -> Union[
+             extracted_response = model_dump(extracted_response)
+         if isinstance(extracted_response, dict):
+             if extracted_response.get("function_call"):
+-                extracted_response["function_call"]["name"] = self._normalize_name(
+-                    extracted_response["function_call"]["name"]
+-                )
++                if extracted_response["function_call"]["name"]:
++                    extracted_response["function_call"]["name"] = self._normalize_name(
++                        extracted_response["function_call"]["name"]
++                    )
+             for tool_call in extracted_response.get("tool_calls") or []:
+-                tool_call["function"]["name"] = self._normalize_name(tool_call["function"]["name"])
++                if tool_call["function"]["name"]:
++                    tool_call["function"]["name"] = self._normalize_name(tool_call["function"]["name"])
+                 # Remove id and type if they are not present.
+                 # This is to make the tool call object compatible with Mistral API.
+                 if tool_call.get("id") is None:
