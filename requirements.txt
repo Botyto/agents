@@ -3,3 +3,4 @@ gitpython
 requests
 dotenv
 litellm[proxy]
+openai-whisper
