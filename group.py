@@ -8,6 +8,8 @@ dotenv.load_dotenv(dotenv.find_dotenv())
 llama3 = {"model": "llama3", "api_key": "ollama", "base_url": "http://localhost:11434/v1"}
 mistral = {"model": "mistral", "api_key": "ollama", "base_url": "http://localhost:11434/v1"}
 litellm = {"model": "ollama_chat/mistral", "api_key": "dummy", "base_url": "http://localhost:4000"}
+# CLI: litellm --model ollama_chat/mistral
+
 import autogen.oai.client
 import autogen.token_count_utils
 autogen.oai.client.OAI_PRICE1K["llama3"] = (0.0, 0.0)
