@@ -1,0 +1,221 @@
+diff --git a/autogen/agentchat/contrib/agent_builder.py b/autogen/agentchat/contrib/agent_builder.py
+index c9a2d7960..141221e36 100644
+--- a/autogen/agentchat/contrib/agent_builder.py
++++ b/autogen/agentchat/contrib/agent_builder.py
+@@ -6,7 +6,7 @@
+ import socket
+ import subprocess as sp
+ import time
+-from typing import Dict, List, Optional, Tuple, Union
++from typing import Any, Dict, List, Optional, Tuple, Union
+ 
+ import requests
+ from termcolor import colored
+@@ -97,7 +97,7 @@ class AgentBuilder:
+     CODING_PROMPT = """Does the following task need programming (i.e., access external API or tool by coding) to solve,
+ or coding may help the following task become easier?
+ 
+-TASK: {task}
++TASK: {building_task}
+ 
+ Answer only YES or NO.
+ """
+@@ -106,7 +106,7 @@ class AgentBuilder:
+ Suggest no more then {max_agents} experts with their name according to the following user requirement.
+ 
+ ## User requirement
+-{task}
++{building_task}
+ 
+ # Task requirement
+ - Expert's name should follow the format: [skill]_Expert.
+@@ -118,10 +118,10 @@ class AgentBuilder:
+ - Ensure that your description are clear and unambiguous, and include all necessary information.
+ 
+ # Task
+-{task}
++{building_task}
+ 
+ # Expert name
+-{position}
++{name}
+ 
+ # Template
+ {default_sys_msg}
+@@ -131,17 +131,17 @@ class AgentBuilder:
+ Summarize the following expert's description in a sentence.
+ 
+ # Expert name
+-{position}
++{name}
+ 
+ # Expert's description
+-{sys_msg}
++{system_message}
+ """
+ 
+     AGENT_SEARCHING_PROMPT = """# Your goal
+ Considering the following task, what experts should be involved to the task?
+ 
+ # TASK
+-{task}
++{building_task}
+ 
+ # EXPERT LIST
+ {agent_list}
+@@ -157,7 +157,7 @@ class AgentBuilder:
+ Match roles in the role set to each expert in expert set.
+ 
+ # Skill set
+-{skills}
++{building_task}
+ 
+ # Expert pool (formatting with name: description)
+ {expert_pool}
+@@ -354,6 +354,58 @@ def clear_all_agents(self, recycle_endpoint: Optional[bool] = True):
+             self.clear_agent(agent_name, recycle_endpoint)
+         print(colored("All agents have been cleared.", "yellow"), flush=True)
+ 
++    def _build_agent_sys_msg(self, config: Dict[str, Any]):
++        print(f"Preparing system message for {config['name']}", flush=True)
++        resp_agent_sys_msg = (
++            self.builder_model.create(
++                messages=[
++                    {
++                        "role": "user",
++                        "content": self.AGENT_SYS_MSG_PROMPT.format(
++                            default_sys_msg=self.DEFAULT_DESCRIPTION,
++                            **config,
++                        ),
++                    }
++                ]
++            )
++            .choices[0]
++            .message.content
++        )
++        return resp_agent_sys_msg
++    
++    def _build_agent_description(self, config: Dict[str, Any]):
++        print(f"Preparing description for {config['name']}", flush=True)
++        resp_agent_description = (
++            self.builder_model.create(
++                messages=[
++                    {
++                        "role": "user",
++                        "content": self.AGENT_DESCRIPTION_PROMPT.format(**config),
++                    }
++                ]
++            )
++            .choices[0]
++            .message.content
++        )
++        return resp_agent_description
++
++    def _agent_init_config(self, building_task: str, name: str) -> Dict[str, Any]:
++        return {
++            "name": name,
++            "building_task": building_task,
++        }
++    
++    def _agent_expand_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
++        config["system_message"] = self._build_agent_sys_msg(config)
++        config["description"] = self._build_agent_description(config)
++
++    def _build_single_agent_config(self, building_task: str, name: str) -> Dict[str, Any]:
++        config = self._agent_init_config(building_task, name)
++        self._agent_expand_config(config)
++        if "building_task" in config:
++            del config["building_task"]
++        return config
++
+     def build(
+         self,
+         building_task: str,
+@@ -400,7 +452,7 @@ def build(
+                 messages=[
+                     {
+                         "role": "user",
+-                        "content": self.AGENT_NAME_PROMPT.format(task=building_task, max_agents=max_agents),
++                        "content": self.AGENT_NAME_PROMPT.format(building_task=building_task, max_agents=max_agents),
+                     }
+                 ]
+             )
+@@ -410,61 +462,26 @@ def build(
+         agent_name_list = [agent_name.strip().replace(" ", "_") for agent_name in resp_agent_name.split(",")]
+         print(f"{agent_name_list} are generated.", flush=True)
+ 
+-        print(colored("==> Generating system message...", "green"), flush=True)
+-        agent_sys_msg_list = []
+-        for name in agent_name_list:
+-            print(f"Preparing system message for {name}", flush=True)
+-            resp_agent_sys_msg = (
+-                self.builder_model.create(
+-                    messages=[
+-                        {
+-                            "role": "user",
+-                            "content": self.AGENT_SYS_MSG_PROMPT.format(
+-                                task=building_task,
+-                                position=name,
+-                                default_sys_msg=self.DEFAULT_DESCRIPTION,
+-                            ),
+-                        }
+-                    ]
+-                )
+-                .choices[0]
+-                .message.content
+-            )
+-            agent_sys_msg_list.append(resp_agent_sys_msg)
+-
+-        print(colored("==> Generating description...", "green"), flush=True)
+-        agent_description_list = []
+-        for name, sys_msg in list(zip(agent_name_list, agent_sys_msg_list)):
+-            print(f"Preparing description for {name}", flush=True)
+-            resp_agent_description = (
+-                self.builder_model.create(
+-                    messages=[
+-                        {
+-                            "role": "user",
+-                            "content": self.AGENT_DESCRIPTION_PROMPT.format(position=name, sys_msg=sys_msg),
+-                        }
+-                    ]
+-                )
+-                .choices[0]
+-                .message.content
+-            )
+-            agent_description_list.append(resp_agent_description)
++        print(colored("==> Generating intermediate configs...", "green"), flush=True)
++        agent_intermediate_configs = (
++            self._build_single_agent_config(building_task, name)
++            for name in agent_name_list
++        )
+ 
+-        for name, sys_msg, description in list(zip(agent_name_list, agent_sys_msg_list, agent_description_list)):
++        for name, intermediate_config in list(zip(agent_name_list, agent_intermediate_configs)):
+             agent_configs.append(
+                 {
+                     "name": name,
+                     "model": self.agent_model,
+                     "tags": self.agent_model_tags,
+-                    "system_message": sys_msg,
+-                    "description": description,
++                    **intermediate_config,
+                 }
+             )
+ 
+         if coding is None:
+             resp = (
+                 self.builder_model.create(
+-                    messages=[{"role": "user", "content": self.CODING_PROMPT.format(task=building_task)}]
++                    messages=[{"role": "user", "content": self.CODING_PROMPT.format(building_task=building_task)}]
+                 )
+                 .choices[0]
+                 .message.content
+@@ -585,7 +602,7 @@ def build_from_library(
+                         {
+                             "role": "user",
+                             "content": self.AGENT_SELECTION_PROMPT.format(
+-                                skills=building_task, expert_pool=expert_pool, max_agents=self.max_agents
++                                building_task=building_task, expert_pool=expert_pool, max_agents=self.max_agents
+                             ),
+                         }
+                     ]
